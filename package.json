@@ -1,0 +1,14 @@
+{
+  "name": "tempnodething",
+  "version": "1.0.0",
+  "main": "iindexj.js",
+  "devDependencies": {
+    "electron": "^17.0.0"
+  },
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

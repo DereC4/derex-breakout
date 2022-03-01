@@ -13,12 +13,21 @@ let score = 0;
 var brickWidth = 50;
 var brickHeight = 20;
 var brickPadding = 10;
-var brickOffsetTop = 30;
+var brickOffsetTop = 30 
 var brickOffsetLeft = 30;
 var playing = false;
 var level = -1;
 var lives = 3;
 var practice = false;
+var hyperSensitive = false;
+var antigravityball = false;
+var slowBall = false;
+var schlongPaddle = false;
+var schortPaddle = false;
+var currentpowerup = ""
+
+// Win Condition
+var stroudoniaBuff = false;
 
 window.onload = function() 
 {
@@ -38,7 +47,8 @@ function startPractice()
   }
   if(level==0)
   {
-    loadlevel(1,1);
+    level = 5;
+    loadlevel(9,6);
   }
   level = ": Practice";
   lives = 99999999;
@@ -72,19 +82,19 @@ function nextLevel()
     }
     if(level==2)
     {
-      loadlevel(3,5);
+      loadlevel(2,5);
     }
     if(level==3)
     {
-      loadlevel(5,5);
+      loadlevel(3,5);
     }
     if(level==4)
     {
-      loadlevel(6,5);
+      loadlevel(4,5);
     }
     if(level==5)
     {
-      loadlevel(7,5);
+      loadlevel(5,5);
     }
   }
 }
@@ -104,12 +114,22 @@ function winGame()
   context=null;
   alert('Victory! You Win!');
 }
+function winGameStroud()
+{
+  context.font = '32px Calibri';
+  context.fillStyle = "#C724B1";
+  context=null;
+  alert('Stroudonia has blessed you! You Instantly Win!');
+}
 function drawScore() 
 {
   context.font = "19px Calibri";
   context.fillStyle = "#C724B1";
   context.fillText("Score: "+score, 8, 20);
   context.fillText("Health: "+lives, 325, 20);
+  drawPowerUp(); 
+  context.font = "19px Calibri";
+  context.fillStyle = "#C724B1";
   if(practice)
     context.fillText('Practice Mode', 135, 20);
   else
@@ -244,12 +264,29 @@ var ball = new Ball(200, 300);
 
 Ball.prototype.update = function(paddle1) 
 {
-  this.x += this.x_speed;
-  this.y += this.y_speed;
+  if(hyperSensitive)
+  {
+    this.x += this.x_speed*2;
+    this.y += this.y_speed*2;
+  }
+  if(slowBall)
+  {
+    this.x += this.x_speed*0.25;
+    this.y += this.y_speed*0.25;
+  }
+  else
+  {
+    this.x += this.x_speed*0.65;
+    this.y += this.y_speed*0.65;
+  }
   var top_x = this.x - 5;
   var top_y = this.y - 5;
   var bottom_x = this.x + 5;
   var bottom_y = this.y + 5;
+  if(this.y>canvas.width-100 && antigravityball)
+  {
+    this.y_speed =-this.y_speed;
+  }
   if(this.y<0)
   {
     this.y = 0;
@@ -294,12 +331,28 @@ var update = function()
 document.addEventListener("mousemove", mouseMoveHandler, false);
 function mouseMoveHandler(e) 
 {
+  // hyperSensitive = true;
+  // hyperMouse = true;
   var relativeX = e.clientX - canvas.offsetLeft;
-  if(relativeX > 0 && relativeX < canvas.width) 
+  if(!hyperSensitive && relativeX > 0 && relativeX < canvas.width) 
   {
     player.paddle.x_speed = player.paddle.x-relativeX;
     player.paddle.x = relativeX;
-    
+  }
+  else if(hyperSensitive && relativeX > 0 && relativeX < canvas.width)
+  {
+    player.paddle.x_speed = player.paddle.x-relativeX;
+    player.paddle.x = relativeX;
+  }
+  if(player.paddle.x < 0)
+  {
+    player.paddle.x = 0;
+    player.paddle.x_speed = 0;
+  }
+  if (player.paddle.x + player.paddle.width > 400) 
+  { 
+    player.paddle.x = 400 - player.paddle.width;
+    player.paddle.x_speed = 0;
   }
 }
 Paddle.prototype.move = function(x, y) 
@@ -321,6 +374,7 @@ Paddle.prototype.move = function(x, y)
     this.x_speed = 0;
   }
 }
+var poweruptimes = 0;
 function collisionDetection() 
 {
   
@@ -333,24 +387,75 @@ function collisionDetection()
           {
               if(ball.x > b.x && ball.x < b.x+brickWidth && ball.y > b.y && ball.y < b.y+brickHeight) 
               {
-                  tempstatus = b.status-1;
-                  ball.y_speed = -ball.y_speed;
-                  bricks[c][r] = { x: 0, y: 0 , status: tempstatus};
-                  var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
-                  var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
-                  bricks[c][r].x = brickX;
-                  bricks[c][r].y = brickY;
-                  if(tempstatus == 0)
+                if(level>1 || level==": Practice")
+                {
+                  temp = getRandomInt(1,20);
+                  if(temp==1)
                   {
-                    context.beginPath();
-                    context.rect(brickX, brickY, brickWidth, brickHeight);
-                    context.fillStyle = "#808080";
-                    context.fill();
-                    context.closePath();
+                    hyperSensitive = true;
+                    drawPowerUp();
+                    slowBall = false;
+                    currentpowerup = "hyper sensitivity";
                   }
-                  score += 1;
+                  if(temp==2)
+                  {
+                    slowBall = true;
+                    drawPowerUp();
+                    hyperSensitive = false;
+                    currentpowerup = "time slows down!!"
+                  }
+                  // if(temp==3)
+                  // {
+                  //   schlongPaddle = true;
+                  //   drawPowerUp("longer paddle!");
+                  // }
+                  // if(temp==4)
+                  // {
+                  //   schortPaddle = true;
+                  //   drawPowerUp("shorter paddle!");
+                  // }
+                  if(temp==5)
+                  {
+                    if(getRandomInt(1,100)<5)
+                    {
+                      drawPowerUp();
+                      currentpowerup = "Stroudonia Boost: Instant Win!"
+                      winGameStroud();
+                    }
+                  }
+                  else if(poweruptimes>3)
+                  {
+                    currentpowerup = "";
+                    hyperSensitive = false;
+                    slowBall = false;
+                    poweruptimes = 0;
+                  }
+                }
+                tempstatus = b.status-1;
+                ball.y_speed = -ball.y_speed;
+                bricks[c][r] = { x: 0, y: 0 , status: tempstatus};
+                var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+                var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+                bricks[c][r].x = brickX;
+                bricks[c][r].y = brickY;
+                if(tempstatus == 0)
+                {
+                  context.beginPath();
+                  context.rect(brickX, brickY, brickWidth, brickHeight);
+                  context.fillStyle = "#808080";
+                  context.fill();
+                  context.closePath();
+                }
+                score += 1;
+                poweruptimes += 1;
               }
           }
       }
   }
+}
+function drawPowerUp() 
+{
+  context.font = "30px Calibri";
+  context.fillStyle = "#C724B1";
+  context.fillText(currentpowerup, 50, canvas.width/2+200);
 }
